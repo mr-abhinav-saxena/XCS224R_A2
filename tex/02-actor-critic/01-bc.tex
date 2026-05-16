@@ -1,5 +1,5 @@
 \item \points{2a} 
 
-Optimizing behavior in environments with sparse rewards is difficult due to limited reward supervision. To alleviate this, we provide the agent with 20 successful demonstrations, which we will use to pre-train with behavior cloning. In \textbf{ac.py} complete the \textbf{bc} function of the \textbf{ACAgent} class to train the policy using supervised behavior cloning. That is, given state-action pairs $o_t, a_t$ optimize the loss $$\mathcal{L}_{\pi_{\theta}, f_{\theta}}(o_t, a_t) = -\log \pi_{\theta}(a_t|o_t)$$
+Optimizing behavior in environments with sparse rewards is difficult due to limited reward supervision. To alleviate this, we provide the agent with 20 successful demonstrations, which we will use to pre-train with behavior cloning. In \textbf{submission.py} complete the \textbf{bc} function of the \textbf{ACAgent} class to train the policy using supervised behavior cloning. That is, given state-action pairs $o_t, a_t$ optimize the loss $$\mathcal{L}_{\pi_{\theta}, f_{\theta}}(o_t, a_t) = -\log \pi_{\theta}(a_t|o_t)$$
 
 We will also use this to update the actor during later RL training, to improve stability.

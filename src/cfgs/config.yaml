@@ -30,7 +30,7 @@ use_tb: true
 # experiment
 experiment: exp
 # agent
-lr: 1e-4
+lr: 1e-3
 
 agent:
   _target_: submission.ACAgent

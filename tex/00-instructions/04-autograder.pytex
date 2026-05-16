@@ -43,9 +43,7 @@ $ python grader.py 3a-0-basic
 \end{lstlisting}
 
 Before beginning this course, please walk through the
-\href{https://github.com/scpd-proed/General_Handouts/blob/master/Anaconda_Setup.pdf}{Anaconda
-Setup for XCS Courses} to familiarize yourself with
-the coding environment.  Use the env defined in ~src/environment.yml~
-to run your code.  This is the same environment used by the online autograder.''')
+\href{README.md}{Development environment} to familiarize yourself with
+the coding environment.''')
 🐍
 

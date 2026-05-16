@@ -7,6 +7,8 @@ import torch
 import torchvision
 from termcolor import colored
 from torch.utils.tensorboard import SummaryWriter
+from typing import Dict, Any, Tuple, Optional, List, Union
+import pathlib
 
 COMMON_TRAIN_FORMAT = [('frame', 'F', 'int'), ('step', 'S', 'int'),
                        ('episode', 'E', 'int'), ('episode_length', 'L', 'int'),
@@ -22,30 +24,30 @@ COMMON_EVAL_FORMAT = [('frame', 'F', 'int'), ('step', 'S', 'int'),
 
 
 class AverageMeter(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self._sum = 0
         self._count = 0
 
-    def update(self, value, n=1):
+    def update(self, value: float, n: int = 1) -> None:
         self._sum += value
         self._count += n
 
-    def value(self):
+    def value(self) -> float:
         return self._sum / max(1, self._count)
 
 
 class MetersGroup(object):
-    def __init__(self, csv_file_name, formating):
+    def __init__(self, csv_file_name: pathlib.Path, formating: List[Tuple[str, str, str]]) -> None:
         self._csv_file_name = csv_file_name
         self._formating = formating
         self._meters = defaultdict(AverageMeter)
         self._csv_file = None
         self._csv_writer = None
 
-    def log(self, key, value, n=1):
+    def log(self, key: str, value: float, n: int = 1) -> None:
         self._meters[key].update(value, n)
 
-    def _prime_meters(self):
+    def _prime_meters(self) -> Dict[str, float]:
         data = dict()
         for key, meter in self._meters.items():
             if key.startswith('train'):
@@ -62,7 +64,7 @@ class MetersGroup(object):
             data[key] = meter.value()
         return data
 
-    def _remove_old_entries(self, data):
+    def _remove_old_entries(self, data: Dict[str, float]) -> None:
         rows = []
         with self._csv_file_name.open('r') as f:
             reader = csv.DictReader(f)
@@ -78,7 +80,7 @@ class MetersGroup(object):
             for row in rows:
                 writer.writerow(row)
 
-    def _dump_to_csv(self, data):
+    def _dump_to_csv(self, data: Dict[str, float]) -> None:
         if self._csv_writer is None:
             should_write_header = True
             if self._csv_file_name.exists():
@@ -95,7 +97,7 @@ class MetersGroup(object):
         self._csv_writer.writerow(data)
         self._csv_file.flush()
 
-    def _format(self, key, value, ty):
+    def _format(self, key: str, value: float, ty: str) -> str:
         if ty == 'int':
             value = int(value)
             return f'{key}: {value}'
@@ -107,7 +109,7 @@ class MetersGroup(object):
         else:
             raise f'invalid format type: {ty}'
 
-    def _dump_to_console(self, data, prefix):
+    def _dump_to_console(self, data: Dict[str, float], prefix: str) -> None:
         if prefix == 'train':
             color = 'yellow'
         else:
@@ -119,7 +121,7 @@ class MetersGroup(object):
             pieces.append(self._format(disp_key, value, ty))
         print(' | '.join(pieces))
 
-    def dump(self, step, prefix):
+    def dump(self, step: int, prefix: str) -> None:
         if len(self._meters) == 0:
             return
         data = self._prime_meters()
@@ -130,7 +132,7 @@ class MetersGroup(object):
 
 
 class Logger(object):
-    def __init__(self, log_dir, use_tb):
+    def __init__(self, log_dir: pathlib.Path, use_tb: bool) -> None:
         self._log_dir = log_dir
         self._pretrain_mg = MetersGroup(log_dir / 'pretrain.csv',
                                      formating=COMMON_TRAIN_FORMAT)
@@ -147,11 +149,11 @@ class Logger(object):
         else:
             self._sw = None
 
-    def _try_sw_log(self, key, value, step):
+    def _try_sw_log(self, key: str, value: float, step: int) -> None:
         if self._sw is not None:
             self._sw.add_scalar(key, value, step)
 
-    def log(self, key, value, step):
+    def log(self, key: str, value: Union[float, torch.Tensor], step: int) -> None:
         assert key.startswith('train') or key.startswith('actor') or key.startswith('critic') or key.startswith('eval') or key.startswith('pretrain')
         if type(value) == torch.Tensor:
             value = value.item()
@@ -169,11 +171,11 @@ class Logger(object):
 
         mg.log(key, value)
 
-    def log_metrics(self, metrics, step, ty):
+    def log_metrics(self, metrics: Dict[str, float], step: int, ty: str) -> None:
         for key, value in metrics.items():
             self.log(f'{ty}/{key}', value, step)
 
-    def dump(self, step, ty=None):
+    def dump(self, step: int, ty: Optional[str] = None) -> None:
         if ty == 'train':
             self._train_mg.dump(step, 'train')
         if ty is None or ty == 'eval':
@@ -185,21 +187,21 @@ class Logger(object):
         if ty == 'pretrain':
             self._pretrain_mg.dump(step, 'pretrain')
 
-    def log_and_dump_ctx(self, step, ty):
+    def log_and_dump_ctx(self, step: int, ty: str) -> 'LogAndDumpCtx':
         return LogAndDumpCtx(self, step, ty)
 
 
 class LogAndDumpCtx:
-    def __init__(self, logger, step, ty):
+    def __init__(self, logger: Logger, step: int, ty: str) -> None:
         self._logger = logger
         self._step = step
         self._ty = ty
 
-    def __enter__(self):
+    def __enter__(self) -> 'LogAndDumpCtx':
         return self
 
-    def __call__(self, key, value):
+    def __call__(self, key: str, value: float) -> None:
         self._logger.log(f'{self._ty}/{key}', value, self._step)
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         self._logger.dump(self._step, self._ty)

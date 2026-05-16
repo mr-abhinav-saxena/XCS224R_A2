@@ -9,25 +9,26 @@ import torch.nn.functional as F
 from omegaconf import OmegaConf
 from torch import distributions as pyd
 from torch.distributions.utils import _standard_normal
+from typing import Any, Tuple, Iterable, Optional, Union, List
 
 
 class eval_mode:
-    def __init__(self, *models):
+    def __init__(self, *models: nn.Module) -> None:
         self.models = models
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.prev_states = []
         for model in self.models:
             self.prev_states.append(model.training)
             model.train(False)
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> bool:
         for model, state in zip(self.models, self.prev_states):
             model.train(state)
         return False
 
 
-def set_seed_everywhere(seed):
+def set_seed_everywhere(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -35,17 +36,17 @@ def set_seed_everywhere(seed):
     random.seed(seed)
 
 
-def soft_update_params(net, target_net, tau):
+def soft_update_params(net: nn.Module, target_net: nn.Module, tau: float) -> None:
     for param, target_param in zip(net.parameters(), target_net.parameters()):
         target_param.data.copy_(tau * param.data +
                                 (1 - tau) * target_param.data)
 
 
-def to_torch(xs, device):
+def to_torch(xs: Iterable[Any], device: torch.device) -> Tuple[torch.Tensor, ...]:
     return tuple(torch.as_tensor(x, device=device, dtype=torch.float32) for x in xs)
 
 
-def weight_init(m):
+def weight_init(m: nn.Module) -> None:
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
         if hasattr(m.bias, 'data'):
@@ -58,11 +59,11 @@ def weight_init(m):
 
 
 class Until:
-    def __init__(self, until, action_repeat=1):
+    def __init__(self, until: Optional[int], action_repeat: int = 1) -> None:
         self._until = until
         self._action_repeat = action_repeat
 
-    def __call__(self, step):
+    def __call__(self, step: int) -> bool:
         if self._until is None:
             return True
         until = self._until // self._action_repeat
@@ -70,11 +71,11 @@ class Until:
 
 
 class Every:
-    def __init__(self, every, action_repeat=1):
+    def __init__(self, every: Optional[int], action_repeat: int = 1) -> None:
         self._every = every
         self._action_repeat = action_repeat
 
-    def __call__(self, step):
+    def __call__(self, step: int) -> bool:
         if self._every is None:
             return False
         every = self._every // self._action_repeat
@@ -84,33 +85,33 @@ class Every:
 
 
 class Timer:
-    def __init__(self):
+    def __init__(self) -> None:
         self._start_time = time.time()
         self._last_time = time.time()
 
-    def reset(self):
+    def reset(self) -> Tuple[float, float]:
         elapsed_time = time.time() - self._last_time
         self._last_time = time.time()
         total_time = time.time() - self._start_time
         return elapsed_time, total_time
 
-    def total_time(self):
+    def total_time(self) -> float:
         return time.time() - self._start_time
 
 
 class TruncatedNormal(pyd.Normal):
-    def __init__(self, loc, scale, low=-1.0, high=1.0, eps=1e-6):
+    def __init__(self, loc: torch.Tensor, scale: torch.Tensor, low: float = -1.0, high: float = 1.0, eps: float = 1e-6) -> None:
         super().__init__(loc, scale, validate_args=False)
         self.low = low
         self.high = high
         self.eps = eps
 
-    def _clamp(self, x):
+    def _clamp(self, x: torch.Tensor) -> torch.Tensor:
         clamped_x = torch.clamp(x, self.low + self.eps, self.high - self.eps)
         x = x - x.detach() + clamped_x.detach()
         return x
 
-    def sample(self, clip=None, sample_shape=torch.Size()):
+    def sample(self, clip: Optional[float] = None, sample_shape: torch.Size = torch.Size()) -> torch.Tensor:
         shape = self._extended_shape(sample_shape)
         eps = _standard_normal(shape,
                                dtype=self.loc.dtype,
@@ -122,7 +123,7 @@ class TruncatedNormal(pyd.Normal):
         return self._clamp(x)
 
 
-def schedule(schdl, step):
+def schedule(schdl: str, step: int) -> float:
     try:
         return float(schdl)
     except ValueError:

@@ -13,6 +13,8 @@ from hydra.core.hydra_config import HydraConfig
 import numpy as np
 import torch
 from dm_env import specs
+from typing import Any, Iterator, Optional, Dict
+from omegaconf import DictConfig
 
 import mw
 import utils
@@ -22,14 +24,14 @@ from replay_buffer import ReplayBufferStorage, make_replay_loader
 torch.backends.cudnn.benchmark = True
 
 
-def make_agent(obs_spec, action_spec, cfg):
+def make_agent(obs_spec: Any, action_spec: Any, cfg: DictConfig) -> Any:
     cfg.obs_shape = obs_spec.shape
     cfg.action_shape = action_spec.shape
     return hydra.utils.instantiate(cfg)
 
 
 class Workspace:
-    def __init__(self, cfg):
+    def __init__(self, cfg: DictConfig) -> None:
         self.work_dir = Path(HydraConfig.get().runtime.output_dir)
         print(f'workspace: {self.work_dir}')
 
@@ -45,7 +47,7 @@ class Workspace:
         self._global_step = 0
         self._global_episode = 0
 
-    def setup(self):
+    def setup(self) -> None:
         # create logger
         self.logger = Logger(self.work_dir, use_tb=self.cfg.use_tb)
         # create envs
@@ -82,30 +84,30 @@ class Workspace:
         copytree(str(Path.cwd() / "demos/"), str(self.work_dir / 'buffer'), dirs_exist_ok=True)
 
     @property
-    def global_step(self):
+    def global_step(self) -> int:
         return self._global_step
 
     @property
-    def global_episode(self):
+    def global_episode(self) -> int:
         return self._global_episode
 
     @property
-    def global_frame(self):
+    def global_frame(self) -> int:
         return self.global_step * self.cfg.action_repeat
 
     @property
-    def replay_iter(self):
+    def replay_iter(self) -> Iterator[Any]:
         if self._replay_iter is None:
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
 
     @property
-    def demo_iter(self):
+    def demo_iter(self) -> Iterator[Any]:
         if self._demo_iter is None:
             self._demo_iter = iter(self.demo_loader)
         return self._demo_iter
 
-    def eval(self, num_eval_episodes=100):
+    def eval(self, num_eval_episodes: int = 100) -> None:
         step, episode, total_reward, total_success = 0, 0, 0, 0
         eval_until_episode = utils.Until(num_eval_episodes or self.cfg.num_eval_episodes)
 
@@ -132,7 +134,7 @@ class Workspace:
             log('step', self.global_step)
             log('eval_total_time', self.timer.total_time())
 
-    def train(self):
+    def train(self) -> None:
         # predicates
 
         train_until_step = utils.Until(self.cfg.num_train_frames,
@@ -204,14 +206,14 @@ class Workspace:
             episode_step += 1
             self._global_step += 1
 
-    def save_snapshot(self):
+    def save_snapshot(self) -> None:
         snapshot = self.work_dir / 'snapshot.pt'
         keys_to_save = ['agent', 'timer', '_global_step', '_global_episode']
         payload = {k: self.__dict__[k] for k in keys_to_save}
         with snapshot.open('wb') as f:
             torch.save(payload, f)
 
-    def load_snapshot(self):
+    def load_snapshot(self) -> None:
         snapshot = self.work_dir / 'snapshot.pt'
         with snapshot.open('rb') as f:
             payload = torch.load(f)
@@ -220,7 +222,7 @@ class Workspace:
 
 
 @hydra.main(version_base=None, config_path="cfgs", config_name="config")
-def main(cfg):
+def main(cfg: DictConfig) -> None:
     from train import Workspace as W
     root_dir = Path.cwd()
     workspace = W(cfg)

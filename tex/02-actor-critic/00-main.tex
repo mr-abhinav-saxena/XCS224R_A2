@@ -9,12 +9,12 @@ At each step the agent processes observations $o_t$, which consists of the envir
 The full agent consists of:
 
 \begin{itemize}
-  \item The actor-critic algorithm utilizes critic networks $Q_{\theta^i}(o_t, a_t)$. This is implemented as the \textbf{Critic} class in \textbf{ac.py}. We use an ensemble 
+  \item The actor-critic algorithm utilizes critic networks $Q_{\theta^i}(o_t, a_t)$. This is implemented as the \textbf{Critic} class in \textbf{submission.py}. We use an ensemble 
   of $N$ different critic networks. Using an ensemble of critic networks can help reduce error in the Q-value estimates.
   \item Each critic network has a corresponding $target$ critic network $\bar{Q}_{\theta^i}(o_t, a_t)$., which is used for computing the Bellman targets for critic updates. 
   We use target critic networks, which are updated more slowly, to have a more stable target for learning.
-  \item The final component of the algorithm is the Actor or policy $\pi_{\theta}(o_{t})$. This is implemented as the \textbf{Actor} class in \textbf{ac.py}. 
-  You should familiarize yourself with these functions and their inputs and outputs. You should not modify any other files besides \textbf{ac.py}.
+  \item The final component of the algorithm is the Actor or policy $\pi_{\theta}(o_{t})$. This is implemented as the \textbf{Actor} class in \textbf{submission.py}. 
+  You should familiarize yourself with these functions and their inputs and outputs. You should not modify any other files besides \textbf{submission.py}.
 \end{itemize}
 
 

@@ -4,7 +4,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import RGBColor
 
 
-def create_invoice():
+def create_invoice() -> None:
     document = Document()
 
     # --- Styles ---
