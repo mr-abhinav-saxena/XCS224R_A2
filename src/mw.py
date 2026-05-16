@@ -1,5 +1,6 @@
 from collections import deque, OrderedDict
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Tuple, Optional, Union
+import pathlib
 
 import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
@@ -12,7 +13,7 @@ from dm_env import StepType, specs
 
 class MetaWorldEnv:
 
-    def __init__(self, name="hammer-v3", action_repeat=2, duration=50, save_video=False, workdir=None, num_eval_episodes=50):
+    def __init__(self, name: str = "hammer-v3", action_repeat: int = 2, duration: int = 50, save_video: bool = False, workdir: Optional[pathlib.Path] = None, num_eval_episodes: int = 50) -> None:
 
         from metaworld.env_dict import ALL_V3_ENVIRONMENTS
 
@@ -54,16 +55,16 @@ class MetaWorldEnv:
                 disable_logger=False,
             )
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         if attr == "_wrapped_env":
             raise AttributeError()
         return getattr(self._env, attr)
 
     @property
-    def observation_space(self):
+    def observation_space(self) -> gym.Space:
         return self._env.observation_space
 
-    def step(self, action):
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, dict]:
         reward = 0.0
         for _ in range(self.action_repeat):
             state, rew, terminated, truncated, info = self._env.step(action)
@@ -77,7 +78,7 @@ class MetaWorldEnv:
             truncated = True
         return state, reward, terminated, truncated, info
 
-    def reset(self):
+    def reset(self) -> np.ndarray:
 
         self._env.unwrapped.hand_init_pos = self.hand_init_pose + 0.03 * np.random.normal(size=3)
 
@@ -91,11 +92,11 @@ class MetaWorldEnv:
 
 class GymWrapper:
 
-    def __init__(self, env, act_key='action'):
+    def __init__(self, env: Any, act_key: str = 'action') -> None:
         self._env = env
         self._act_key = act_key
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if name.startswith('__'):
             raise AttributeError(name)
         try:
@@ -103,13 +104,13 @@ class GymWrapper:
         except AttributeError:
             raise ValueError(name)
 
-    def observation_spec(self):
+    def observation_spec(self) -> dm_env.specs.Array:
         return dm_env.specs.Array(
               shape = self._env.observation_space.shape,
               dtype = self._env.observation_space.dtype,
               name = 'observation')
 
-    def action_spec(self):
+    def action_spec(self) -> dm_env.specs.BoundedArray:
         return dm_env.specs.BoundedArray(
           shape = self._env.action_space.shape,
           minimum = self._env.action_space.low,
@@ -117,7 +118,7 @@ class GymWrapper:
           dtype = self._env.action_space.dtype,
           name = 'action')
 
-    def step(self, action):
+    def step(self, action: np.ndarray) -> dm_env.TimeStep:
         obs, reward, terminated, truncated, info = self._env.step(action)
         return dm_env._environment.TimeStep(
             step_type=StepType.LAST if terminated or truncated else StepType.MID,
@@ -126,7 +127,7 @@ class GymWrapper:
             observation=obs,
         )
 
-    def reset(self):
+    def reset(self) -> dm_env.TimeStep:
         obs = self._env.reset()
         return dm_env._environment.TimeStep(
             step_type = StepType.FIRST,
@@ -143,16 +144,16 @@ class ExtendedTimeStep(NamedTuple):
     observation: Any
     action: Any
 
-    def first(self):
+    def first(self) -> bool:
         return self.step_type == StepType.FIRST
 
-    def mid(self):
+    def mid(self) -> bool:
         return self.step_type == StepType.MID
 
-    def last(self):
+    def last(self) -> bool:
         return self.step_type == StepType.LAST
 
-    def __getitem__(self, attr):
+    def __getitem__(self, attr: Union[str, int]) -> Any:
         if isinstance(attr, str):
             return getattr(self, attr)
         else:
@@ -160,7 +161,7 @@ class ExtendedTimeStep(NamedTuple):
 
 
 class ActionDTypeWrapper(dm_env.Environment):
-    def __init__(self, env, dtype):
+    def __init__(self, env: Any, dtype: Any) -> None:
         self._env = env
         wrapped_action_spec = env.action_spec()
         self._action_spec = specs.BoundedArray(wrapped_action_spec.shape,
@@ -169,36 +170,36 @@ class ActionDTypeWrapper(dm_env.Environment):
                                                wrapped_action_spec.maximum,
                                                'action')
 
-    def step(self, action):
+    def step(self, action: np.ndarray) -> dm_env.TimeStep:
         action = action.astype(self._env.action_spec().dtype)
         return self._env.step(action)
 
-    def observation_spec(self):
+    def observation_spec(self) -> dm_env.specs.Array:
         return self._env.observation_spec()
 
-    def action_spec(self):
+    def action_spec(self) -> dm_env.specs.BoundedArray:
         return self._action_spec
 
-    def reset(self):
+    def reset(self) -> dm_env.TimeStep:
         return self._env.reset()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._env, name)
 
 
 class ExtendedTimeStepWrapper(dm_env.Environment):
-    def __init__(self, env):
+    def __init__(self, env: Any) -> None:
         self._env = env
 
-    def reset(self):
+    def reset(self) -> ExtendedTimeStep:
         time_step = self._env.reset()
         return self._augment_time_step(time_step)
 
-    def step(self, action):
+    def step(self, action: np.ndarray) -> ExtendedTimeStep:
         time_step = self._env.step(action)
         return self._augment_time_step(time_step, action)
 
-    def _augment_time_step(self, time_step, action=None):
+    def _augment_time_step(self, time_step: dm_env.TimeStep, action: Optional[np.ndarray] = None) -> ExtendedTimeStep:
         if action is None:
             action_spec = self.action_spec()
             action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
@@ -208,17 +209,17 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
                                 reward=time_step.reward or 0.0,
                                 discount=time_step.discount or 1.0)
 
-    def observation_spec(self):
+    def observation_spec(self) -> dm_env.specs.Array:
         return self._env.observation_spec()
 
-    def action_spec(self):
+    def action_spec(self) -> dm_env.specs.BoundedArray:
         return self._env.action_spec()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._env, name)
 
 
-def make(cfg, workdir, eval):
+def make(cfg: Any, workdir: pathlib.Path, eval: bool) -> ExtendedTimeStepWrapper:
 
     env = MetaWorldEnv(
         action_repeat=cfg.action_repeat,

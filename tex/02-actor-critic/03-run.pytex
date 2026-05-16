@@ -42,7 +42,7 @@ with open('submission.tex') as f: print((re.search(r'% <SCPD_SUBMISSION_TAG>_2ci
 
 \textbf{Common Bugs}
 \begin{itemize}
-    \item If your critic loss curves remain flat throughout training, make sure the criticsare being updated.
-    \item If your critic losses become very large, make sure the dimensions of your criticpredictions and targets are correct, and/or tensor broadcasting is done correctly.
-    \item Make sure all critics are updated each iteration, not just those corresponding tothe two target critics that are sampled for computing Bellman targets.
+    \item If your critic loss curves remain flat throughout training, make sure the critics are being updated.
+    \item If your critic losses become very large, make sure the dimensions of your critic p redictions and targets are correct, and/or tensor broadcasting is done correctly.
+    \item Make sure all critics are updated each iteration, not just those corresponding to the two target critics that are sampled for computing Bellman targets.
 \end{itemize}

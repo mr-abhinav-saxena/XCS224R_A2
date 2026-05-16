@@ -8,14 +8,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import IterableDataset
+from typing import Dict, Any, Tuple, Optional
+from pathlib import Path
 
-
-def episode_len(episode):
+def episode_len(episode: Dict[str, np.ndarray]) -> int:
     # subtract -1 because the dummy first transition
     return next(iter(episode.values())).shape[0] - 1
 
 
-def save_episode(episode, fn):
+def save_episode(episode: Dict[str, np.ndarray], fn: Path) -> None:
     print("Episode:", fn)
     with io.BytesIO() as bs:
         np.savez_compressed(bs, **episode)
@@ -24,7 +25,7 @@ def save_episode(episode, fn):
             f.write(bs.read())
 
 
-def load_episode(fn):
+def load_episode(fn: Path) -> Dict[str, np.ndarray]:
     print("Episode loaded:", fn)
     with fn.open('rb') as f:
         episode = np.load(f)
@@ -33,17 +34,17 @@ def load_episode(fn):
 
 
 class ReplayBufferStorage:
-    def __init__(self, data_specs, replay_dir):
+    def __init__(self, data_specs: Any, replay_dir: Path) -> None:
         self._data_specs = data_specs
         self._replay_dir = replay_dir
         replay_dir.mkdir(exist_ok=True)
         self._current_episode = defaultdict(list)
         self._preload()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._num_transitions
 
-    def add(self, time_step):
+    def add(self, time_step: Any) -> None:
         for spec in self._data_specs:
             value = time_step[spec.name]
             if np.isscalar(value):
@@ -58,7 +59,7 @@ class ReplayBufferStorage:
             self._current_episode = defaultdict(list)
             self._store_episode(episode)
 
-    def _preload(self):
+    def _preload(self) -> None:
         self._num_episodes = 0
         self._num_transitions = 0
         for fn in self._replay_dir.glob('*.npz'):
@@ -66,7 +67,7 @@ class ReplayBufferStorage:
             self._num_episodes += 1
             self._num_transitions += int(eps_len)
 
-    def _store_episode(self, episode):
+    def _store_episode(self, episode: Dict[str, np.ndarray]) -> None:
         eps_idx = self._num_episodes
         eps_len = episode_len(episode)
         self._num_episodes += 1
@@ -77,8 +78,8 @@ class ReplayBufferStorage:
 
 
 class ReplayBuffer(IterableDataset):
-    def __init__(self, replay_dir, max_size, num_workers, nstep, discount,
-                 fetch_every, save_snapshot):
+    def __init__(self, replay_dir: Path, max_size: int, num_workers: int, nstep: int, discount: float,
+                 fetch_every: int, save_snapshot: bool) -> None:
         self._replay_dir = replay_dir
         self._size = 0
         self._max_size = max_size
@@ -91,11 +92,11 @@ class ReplayBuffer(IterableDataset):
         self._samples_since_last_fetch = fetch_every
         self._save_snapshot = save_snapshot
 
-    def _sample_episode(self):
+    def _sample_episode(self) -> Dict[str, np.ndarray]:
         eps_fn = random.choice(self._episode_fns)
         return self._episodes[eps_fn]
 
-    def _store_episode(self, eps_fn):
+    def _store_episode(self, eps_fn: Path) -> bool:
         try:
             episode = load_episode(eps_fn)
         except:
@@ -115,7 +116,7 @@ class ReplayBuffer(IterableDataset):
             eps_fn.unlink(missing_ok=True)
         return True
 
-    def _try_fetch(self):
+    def _try_fetch(self) -> None:
         if self._samples_since_last_fetch < self._fetch_every:
             return
         self._samples_since_last_fetch = 0
@@ -137,7 +138,7 @@ class ReplayBuffer(IterableDataset):
             if not self._store_episode(eps_fn):
                 break
 
-    def _sample(self):
+    def _sample(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         try:
             self._try_fetch()
         except:
@@ -157,19 +158,19 @@ class ReplayBuffer(IterableDataset):
             discount *= episode['discount'][idx + i] * self._discount
         return (obs, action, reward, discount, next_obs)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         while True:
             yield self._sample()
 
 
-def _worker_init_fn(worker_id):
+def _worker_init_fn(worker_id: int) -> None:
     seed = np.random.get_state()[1][0] + worker_id
     np.random.seed(seed)
     random.seed(seed.item())
 
 
-def make_replay_loader(replay_dir, max_size, batch_size, num_workers,
-                       save_snapshot, nstep, discount):
+def make_replay_loader(replay_dir: Path, max_size: int, batch_size: int, num_workers: int,
+                       save_snapshot: bool, nstep: int, discount: float) -> torch.utils.data.DataLoader:
     max_size_per_worker = max_size // max(1, num_workers)
 
     iterable = ReplayBuffer(replay_dir,

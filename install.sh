@@ -32,10 +32,10 @@ ARCH=$(uname -m)
 OS=$(uname -s)
 
 if [[ "$OS" == "Darwin" && "$ARCH" == "arm64" ]]; then
-  echo "cpython-3.12.3-macos-aarch64-none" > .python-version
+  echo "cpython-3.12.13-macos-aarch64-none" > .python-version
   echo "📄 Wrote ARM macOS Python version to .python-version"
 else
-  echo "3.12.3" > .python-version
+  echo "3.12.13" > .python-version
   echo "📄 Wrote Linux/x86_64 Python version to .python-version"
 fi
 

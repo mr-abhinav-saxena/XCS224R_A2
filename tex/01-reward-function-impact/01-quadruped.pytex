@@ -1,6 +1,6 @@
 \item \points{1a}
 
-Design a reward function for the Quadruped task such that the agent walks in a clockwise circle (watch \texttt{mujoco\_mpc/videos/part1.avi} for an example of the desired behavior). The structure of the reward function for the Quadruped task is:
+Design a reward function for the Quadruped task such that the agent walks in a clockwise circle (watch \href{https://drive.google.com/file/d/1j-JZLxbjSp40e78sMh2XWqJ32WYeAsMf/view?usp=sharing}{mujoco\_mpc/videos/part1a.avi} for an example of the desired behavior). The structure of the reward function for the Quadruped task is:
 \begin{align*}
     r_t = -w_0 \cdot r_{t, \text{height}} - w_1 \cdot r_{t, \text{pos}}(w_2, w_3) + c
 \end{align*}

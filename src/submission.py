@@ -4,12 +4,12 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Dict, Tuple, List, Union, Optional, Any
 
 import utils
 
-
 class Actor(nn.Module):
-    def __init__(self, obs_shape, action_shape, hidden_dim, std=0.1):
+    def __init__(self, obs_shape: Tuple[int, ...], action_shape: Tuple[int, ...], hidden_dim: int, std: float = 0.1) -> None:
         super().__init__()
 
         self.std = std
@@ -23,7 +23,7 @@ class Actor(nn.Module):
 
         self.apply(utils.weight_init)
 
-    def forward(self, obs):
+    def forward(self, obs: torch.Tensor) -> utils.TruncatedNormal:
         mu = self.policy(obs)
         mu = torch.tanh(mu)
         std = torch.ones_like(mu) * self.std
@@ -33,7 +33,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, obs_shape, action_shape, num_critics, hidden_dim):
+    def __init__(self, obs_shape: Tuple[int, ...], action_shape: Tuple[int, ...], num_critics: int, hidden_dim: int) -> None:
         super().__init__()
 
         self.critics = nn.ModuleList(
@@ -53,7 +53,7 @@ class Critic(nn.Module):
 
         self.apply(utils.weight_init)
 
-    def forward(self, obs, action):
+    def forward(self, obs: torch.Tensor, action: torch.Tensor) -> List[torch.Tensor]:
         h_action = torch.cat([obs, action], dim=-1)
         return [critic(h_action) for critic in self.critics]
 
@@ -61,16 +61,16 @@ class Critic(nn.Module):
 class ACAgent:
     def __init__(
         self,
-        obs_shape,
-        action_shape,
-        device,
-        lr,
-        hidden_dim,
-        num_critics,
-        critic_target_tau,
-        stddev_clip,
-        use_tb,
-    ):
+        obs_shape: Tuple[int, ...],
+        action_shape: Tuple[int, ...],
+        device: torch.device,
+        lr: float,
+        hidden_dim: int,
+        num_critics: int,
+        critic_target_tau: float,
+        stddev_clip: float,
+        use_tb: bool,
+    ) -> None:
         self.device = device
         self.critic_target_tau = critic_target_tau
         self.use_tb = use_tb
@@ -94,12 +94,12 @@ class ACAgent:
         self.train()
         self.critic_target.train()
 
-    def train(self, training=True):
+    def train(self, training: bool = True) -> None:
         self.training = training
         self.actor.train(training)
         self.critic.train(training)
 
-    def act(self, obs, eval_mode):
+    def act(self, obs: np.ndarray, eval_mode: bool) -> np.ndarray:
         obs = torch.as_tensor(obs, dtype=torch.float32, device=self.device)
         dist = self.actor(obs.unsqueeze(0))
         if eval_mode:
@@ -108,7 +108,7 @@ class ACAgent:
             action = dist.sample(clip=None)
         return action.cpu().numpy()[0]
 
-    def update_critic(self, batch):
+    def update_critic(self, batch: Tuple[Any, ...]) -> Dict[str, float]:
         """
         This function updates the critic and target critic parameters.
 
@@ -141,7 +141,7 @@ class ACAgent:
         #####################
         return metrics
 
-    def update_actor(self, batch):
+    def update_actor(self, batch: Tuple[Any, ...]) -> Dict[str, float]:
         """
         This function updates the policy parameters.
 
@@ -172,7 +172,7 @@ class ACAgent:
 
         return metrics
 
-    def bc(self, batch):
+    def bc(self, batch: Tuple[Any, ...]) -> Dict[str, float]:
         """
         This function updates the policy with end-to-end
         behavior cloning

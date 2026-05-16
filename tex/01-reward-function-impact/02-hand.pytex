@@ -17,7 +17,7 @@ For each part below, you will watch the videos located in \texttt{mujoco\_mpc/vi
 function leads to this behavior.
 
 \begin{enumerate}[label=\roman*.]
-    \item \points{1bi} Watch \texttt{mujoco\_mpc/videos/part1bi.avi}, which was generated with the parameters $w_0 = 20$, $w_1 = 3$, $w_2 = 10$, and $w_3 = 0.1$:
+    \item \points{1bi} Watch \href{https://drive.google.com/file/d/1O4OECBe0tLOXX-Emf4GOSJBdPGRO-xeI/view?usp=sharing}{mujoco\_mpc/videos/part1bi.avi}, which was generated with the parameters $w_0 = 20$, $w_1 = 3$, $w_2 = 10$, and $w_3 = 0.1$:
 \begin{tcolorbox}[width=\linewidth, sharp corners=all, colback=white!95!black]
 \begin{verbatim}
 ./build/bin/mjpc --task="Hand" --steps=100 \
@@ -32,7 +32,7 @@ import re
 with open('submission.tex') as f: print((re.search(r'% <SCPD_SUBMISSION_TAG>_1bi(.*?)% <SCPD_SUBMISSION_TAG>_1bi', f.read(), re.DOTALL)).group(1))
 🐍
 
-    \item \points{1bii} Watch \texttt{mujoco\_mpc/videos/part1bii.avi}, which was generated with the parameters $w_0 = 20$, $w_1 = 3$, $w_2 = 10$, and $w_3 = 1$:
+    \item \points{1bii} Watch \href{https://drive.google.com/file/d/14lFjr0v048ZrA01RKFt51TAzDR6So7gX/view?usp=sharing}{mujoco\_mpc/videos/part1bii.avi}, which was generated with the parameters $w_0 = 20$, $w_1 = 3$, $w_2 = 10$, and $w_3 = 1$:
 \begin{tcolorbox}[width=\linewidth, sharp corners=all, colback=white!95!black]
 \begin{verbatim}
 ./build/bin/mjpc --task="Hand" --steps=100 \
@@ -47,7 +47,7 @@ import re
 with open('submission.tex') as f: print((re.search(r'% <SCPD_SUBMISSION_TAG>_1bii(.*?)% <SCPD_SUBMISSION_TAG>_1bii', f.read(), re.DOTALL)).group(1))
 🐍
 
-    \item \points{1biii} Watch \texttt{mujoco\_mpc/videos/part1biii.avi}, which was generated with the parameters $w_0 = 0$, $w_1 = 0$, $w_2 = 0$, and $w_3 = 1$:
+    \item \points{1biii} Watch \href{https://drive.google.com/file/d/1KqDXN9LVmia7f1XjMvMMz1HaDyoI2nJ5/view?usp=sharing}{mujoco\_mpc/videos/part1biii.avi}, which was generated with the parameters $w_0 = 0$, $w_1 = 0$, $w_2 = 0$, and $w_3 = 1$:
 \begin{tcolorbox}[width=\linewidth, sharp corners=all, colback=white!95!black]
 \begin{verbatim}
 ./build/bin/mjpc --task="Hand" --steps=100 \
