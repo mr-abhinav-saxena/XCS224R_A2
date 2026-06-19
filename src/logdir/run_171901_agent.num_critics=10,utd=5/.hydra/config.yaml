@@ -1,0 +1,32 @@
+action_repeat: 2
+duration: 50
+discount: 0.99
+num_seed_frames: 0
+utd: 5
+bc_freq: 2
+num_train_frames: 100000
+eval_every_frames: 2000
+num_eval_episodes: 50
+save_snapshot: false
+replay_buffer_size: 1000000
+replay_buffer_num_workers: 4
+nstep: 3
+batch_size: 256
+warmup: 2000
+seed: 1
+device: cpu
+save_video: false
+use_tb: true
+experiment: exp
+lr: 0.001
+agent:
+  _target_: submission.ACAgent
+  obs_shape: ???
+  action_shape: ???
+  device: ${device}
+  lr: ${lr}
+  critic_target_tau: 0.005
+  use_tb: ${use_tb}
+  hidden_dim: 256
+  num_critics: 10
+  stddev_clip: 0.3
